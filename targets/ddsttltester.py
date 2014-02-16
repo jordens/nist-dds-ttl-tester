@@ -4,18 +4,26 @@ from migen.bus import wishbone
 from misoclib import gpio, spiflash
 from misoclib.gensoc import GenSoC
 
+class _CRG(Module):
+	def __init__(self, platform):
+		self.clock_domains.cd_sys = ClockDomain()
+		clkgen_locked = Signal()
+		self.specials += Instance("DCM_CLKGEN",
+			p_CLKFXDV_DIVIDE=2, p_CLKFX_DIVIDE=2, p_CLKFX_MD_MAX=2.5, p_CLKFX_MULTIPLY=5,
+			p_CLKIN_PERIOD=31.25, p_SPREAD_SPECTRUM="NONE", p_STARTUP_WAIT="FALSE",
+			i_CLKIN=platform.request("clk32"), o_CLKFX=self.cd_sys.clk,
+			o_LOCKED=clkgen_locked, i_FREEZEDCM=0, i_RST=0)
+		self.specials += Instance("FD", p_INIT=1, i_D=~clkgen_locked, o_Q=self.cd_sys.rst, i_C=ClockSignal())
+
 class DDSTTLTesterSoC(GenSoC):
 	default_platform = "papilio_pro"
 
 	def __init__(self, platform):
 		GenSoC.__init__(self, platform,
-			clk_freq=32*1000000,
+			clk_freq=80*1000000,
 			cpu_reset_address=0x60000)
 
-		# We can't use reset_less as LM32 does require a reset signal
-		self.clock_domains.cd_sys = ClockDomain()
-		self.comb += self.cd_sys.clk.eq(platform.request("clk32"))
-		self.specials += Instance("FD", p_INIT=1, i_D=0, o_Q=self.cd_sys.rst, i_C=ClockSignal())
+		self.submodules.crg = _CRG(platform)
 
 		# BIOS is in SPI flash
 		self.submodules.spiflash = spiflash.SpiFlash(platform.request("spiflash2x"),
