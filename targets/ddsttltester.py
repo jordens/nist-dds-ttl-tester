@@ -6,7 +6,7 @@ from misoclib import gpio, spiflash
 from misoclib.gensoc import GenSoC
 
 _tester_io = [
-	("user_led", 1, Pins(""), IOStandard("LVTTL33")),
+	("user_led", 1, Pins("B:7"), IOStandard("LVTTL33")),
 	("ttl", 0,
 		Subsignal("d", Pins("C:11 C:10 C:9 C:8 C:7 C:6 C:5 C:4 C:3 C:2 C:1 C:0 B:4 A:11 B:5 A:10")),
 		Subsignal("tx_l", Pins("A:9")),
