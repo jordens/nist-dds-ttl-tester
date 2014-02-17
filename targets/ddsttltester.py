@@ -1,8 +1,32 @@
 from migen.fhdl.std import *
 from migen.bus import wishbone
+from mibuild.generic_platform import *
 
 from misoclib import gpio, spiflash
 from misoclib.gensoc import GenSoC
+
+_tester_io = [
+	("user_led", 1, Pins(""), IOStandard("LVTTL33")),
+	("ttl", 0,
+		Subsignal("d", Pins("C:11 C:10 C:9 C:8 C:7 C:6 C:5 C:4 C:3 C:2 C:1 C:0 B:4 A:11 B:5 A:10")),
+		Subsignal("tx_l", Pins("A:9")),
+		Subsignal("tx_h", Pins("B:6")),
+		IOStandard("LVTTL33")),
+	("dds", 0,
+		Subsignal("a", Pins("A:5 B:10 A:6 B:9 A:7 B:8")),
+		Subsignal("d", Pins("A:12 B:3 A:13 B:2 A:14 B:1 A:15 B:0")),
+		Subsignal("sel", Pins("A:2 B:14 A:1 B:15 A:0")),
+		Subsignal("p", Pins("A:8 B:12")),
+		Subsignal("fud", Pins("B:11")),
+		Subsignal("wrl", Pins("A:4")),
+		Subsignal("rdl", Pins("B:13")),
+		Subsignal("res", Pins("A:3")),
+		IOStandard("LVTTL33")),
+	("pmt", 0, Pins("C:13"), IOStandard("LVTTL33")),
+	("pmt", 1, Pins("C:14"), IOStandard("LVTTL33")),
+	("pmt", 2, Pins("C:15"), IOStandard("LVTTL33")),
+	("xtrig", 0, Pins("C:12"), IOStandard("LVTTL33")),
+]
 
 class _CRG(Module):
 	def __init__(self, platform):
@@ -22,6 +46,7 @@ class DDSTTLTesterSoC(GenSoC):
 		GenSoC.__init__(self, platform,
 			clk_freq=80*1000000,
 			cpu_reset_address=0x60000)
+		platform.add_extension(_tester_io)
 
 		self.submodules.crg = _CRG(platform)
 
