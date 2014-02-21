@@ -2,7 +2,7 @@ include $(MSCDIR)/software/common.mak
 
 OBJECTS=isr.o main.o
 
-all: tester.bin
+all: tester.bin tester.fbi
 
 # pull in dependency info for *existing* .o files
 -include $(OBJECTS:.o=.d)
@@ -10,6 +10,9 @@ all: tester.bin
 %.bin: %.elf
 	$(OBJCOPY) -O binary $< $@
 	chmod -x $@
+
+%.fbi: %.bin
+	$(MSCDIR)/tools/mkmscimg $< write $@
 
 tester.elf: $(OBJECTS) libs
 
@@ -33,6 +36,9 @@ main.o: main.c
 %.o: %.S
 	$(assemble)
 
+flash: tester.fbi
+	xc3sprog -c papilio -I$(FLASH_PROXY) tester.fbi:w:0x70000:BIN
+
 libs:
 	$(MAKE) -C $(MSCDIR)/software/libcompiler-rt
 	$(MAKE) -C $(MSCDIR)/software/libbase
@@ -40,4 +46,4 @@ libs:
 clean:
 	$(RM) $(OBJECTS) $(OBJECTS:.o=.d) tester.elf tester.bin .*~ *~
 
-.PHONY: all main.o clean libs load
+.PHONY: all main.o clean libs flash
