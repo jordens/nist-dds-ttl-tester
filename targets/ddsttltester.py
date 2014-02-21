@@ -5,10 +5,13 @@ from mibuild.generic_platform import *
 from misoclib import gpio, spiflash
 from misoclib.gensoc import GenSoC
 
+from testerlib import ttlgpio
+
 _tester_io = [
 	("user_led", 1, Pins("B:7"), IOStandard("LVTTL33")),
 	("ttl", 0,
-		Subsignal("d", Pins("C:11 C:10 C:9 C:8 C:7 C:6 C:5 C:4 C:3 C:2 C:1 C:0 B:4 A:11 B:5 A:10")),
+		Subsignal("d_l", Pins("C:11 C:10 C:9 C:8 C:7 C:6 C:5 C:4")),
+		Subsignal("d_h", Pins("C:3 C:2 C:1 C:0 B:4 A:11 B:5 A:10")),
 		Subsignal("tx_l", Pins("A:9")),
 		Subsignal("tx_h", Pins("B:6")),
 		IOStandard("LVTTL33")),
@@ -42,6 +45,12 @@ class _CRG(Module):
 class DDSTTLTesterSoC(GenSoC):
 	default_platform = "papilio_pro"
 
+	csr_map = {
+		"test_inputs":			10,
+		"test_ttl":				11,
+	}
+	csr_map.update(GenSoC.csr_map)
+
 	def __init__(self, platform):
 		GenSoC.__init__(self, platform,
 			clk_freq=80*1000000,
@@ -62,6 +71,9 @@ class DDSTTLTesterSoC(GenSoC):
 		self.add_wb_slave(lambda a: a[27:29] == 2, self.sys_ram.bus)
 		self.add_cpu_memory_region("sdram", 0x40000000, sys_ram_size)
 
-		self.submodules.leds = gpio.GPIOOut(platform.request("user_led"))
+		self.submodules.leds = gpio.GPIOOut(Cat(platform.request("user_led", i) for i in range(2)))
+		self.submodules.test_inputs = gpio.GPIOIn(Cat([platform.request("pmt", i) for i in range(3)],
+			platform.request("xtrig")))
+		self.submodules.test_ttl = ttlgpio.TTLGPIO(platform.request("ttl"))
 
 default_subtarget = DDSTTLTesterSoC
