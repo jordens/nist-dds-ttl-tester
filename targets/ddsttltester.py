@@ -5,7 +5,7 @@ from mibuild.generic_platform import *
 from misoclib import gpio, spiflash
 from misoclib.gensoc import GenSoC
 
-from testerlib import ttlgpio
+from testerlib import ttlgpio, ad9858
 
 _tester_io = [
 	("user_led", 1, Pins("B:7"), IOStandard("LVTTL")),
@@ -75,5 +75,7 @@ class DDSTTLTesterSoC(GenSoC):
 		self.submodules.test_inputs = gpio.GPIOIn(Cat([platform.request("pmt", i) for i in range(3)],
 			platform.request("xtrig")))
 		self.submodules.test_ttl = ttlgpio.TTLGPIO(platform.request("ttl"))
+		self.submodules.dds = ad9858.AD9858(platform.request("dds"))
+		self.add_wb_slave(lambda a: a[26:29] == 3, self.dds.bus)
 
 default_subtarget = DDSTTLTesterSoC
