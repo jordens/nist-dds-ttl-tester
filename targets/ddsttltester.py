@@ -8,13 +8,13 @@ from misoclib.gensoc import GenSoC
 from testerlib import ttlgpio
 
 _tester_io = [
-	("user_led", 1, Pins("B:7"), IOStandard("LVTTL33")),
+	("user_led", 1, Pins("B:7"), IOStandard("LVTTL")),
 	("ttl", 0,
 		Subsignal("d_l", Pins("C:11 C:10 C:9 C:8 C:7 C:6 C:5 C:4")),
 		Subsignal("d_h", Pins("C:3 C:2 C:1 C:0 B:4 A:11 B:5 A:10")),
 		Subsignal("tx_l", Pins("A:9")),
 		Subsignal("tx_h", Pins("B:6")),
-		IOStandard("LVTTL33")),
+		IOStandard("LVTTL")),
 	("dds", 0,
 		Subsignal("a", Pins("A:5 B:10 A:6 B:9 A:7 B:8")),
 		Subsignal("d", Pins("A:12 B:3 A:13 B:2 A:14 B:1 A:15 B:0")),
@@ -24,11 +24,11 @@ _tester_io = [
 		Subsignal("wr_n", Pins("A:4")),
 		Subsignal("rd_n", Pins("B:13")),
 		Subsignal("reset", Pins("A:3")),
-		IOStandard("LVTTL33")),
-	("pmt", 0, Pins("C:13"), IOStandard("LVTTL33")),
-	("pmt", 1, Pins("C:14"), IOStandard("LVTTL33")),
-	("pmt", 2, Pins("C:15"), IOStandard("LVTTL33")),
-	("xtrig", 0, Pins("C:12"), IOStandard("LVTTL33")),
+		IOStandard("LVTTL")),
+	("pmt", 0, Pins("C:13"), IOStandard("LVTTL")),
+	("pmt", 1, Pins("C:14"), IOStandard("LVTTL")),
+	("pmt", 2, Pins("C:15"), IOStandard("LVTTL")),
+	("xtrig", 0, Pins("C:12"), IOStandard("LVTTL")),
 ]
 
 class _CRG(Module):
