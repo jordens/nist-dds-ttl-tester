@@ -7,15 +7,119 @@
 #include <generated/csr.h>
 #include <console.h>
 
-static char *readstr(void)
+static void inputs(void)
+{
+	int inp;
+
+	inp = test_inputs_in_read();
+	printf("PMT0: %d\n", !!(inp & 0x01));
+	printf("PMT1: %d\n", !!(inp & 0x02));
+	printf("PMT2: %d\n", !!(inp & 0x04));
+	printf("XTRIG:%d\n", !!(inp & 0x08));
+}
+
+static void ttlout(char *value)
+{
+	char *c;
+	unsigned int value2;
+
+	if(*value == 0) {
+		printf("ttlout <value>\n");
+		return;
+	}
+
+	value2 = strtoul(value, &c, 0);
+	if(*c != 0) {
+		printf("incorrect value\n");
+		return;
+	}
+
+	test_ttl_oe_write(0x3);
+	test_ttl_o_write(value2);
+}
+
+static void ttlin(void)
+{
+	test_ttl_oe_write(0x0);
+	printf("0x%04x\n", test_ttl_i_read());
+}
+
+static void ddssel(char *n)
+{
+	char *c;
+	unsigned int n2;
+
+	if(*n == 0) {
+		printf("ddssel <n>\n");
+		return;
+	}
+
+	n2 = strtoul(n, &c, 0);
+	if(*c != 0) {
+		printf("incorrect number\n");
+		return;
+	}
+
+	MMPTR(0xb0000104) = 1 << n2;
+}
+
+static void ddsw(char *addr, char *value)
+{
+	char *c;
+	unsigned int addr2, value2;
+
+	if((*addr == 0) || (*value == 0)) {
+		printf("ddsr <addr> <value>\n");
+		return;
+	}
+
+	addr2 = strtoul(addr, &c, 0);
+	if(*c != 0) {
+		printf("incorrect address\n");
+		return;
+	}
+	value2 = strtoul(value, &c, 0);
+	if(*c != 0) {
+		printf("incorrect value\n");
+		return;
+	}
+
+	MMPTR(0xb0000000 + 4*addr2) = value2;
+}
+
+static void ddsr(char *addr)
+{
+	char *c;
+	unsigned int addr2;
+
+	if(*addr == 0) {
+		printf("ddsr <addr>\n");
+		return;
+	}
+
+	addr2 = strtoul(addr, &c, 0);
+	if(*c != 0) {
+		printf("incorrect address\n");
+		return;
+	}
+
+	printf("0x%02x\n", MMPTR(0xb0000000 + 4*addr2));
+}
+
+static void ddsfud(void)
+{
+	MMPTR(0xb0000100) = 0;
+}
+
+static void readstr(char *s, int size)
 {
 	char c[2];
-	static char s[64];
-	static int ptr = 0;
+	int ptr;
 
-	if(readchar_nonblock()) {
+	c[1] = 0;
+	ptr = 0;
+	while(1) {
 		c[0] = readchar();
-		c[1] = 0;
 		switch(c[0]) {
 			case 0x7f:
 			case 0x08:
@@ -30,33 +134,53 @@ static char *readstr(void)
 			case '\n':
 				s[ptr] = 0x00;
 				putsnonl("\n");
-				ptr = 0;
-				return s;
+				return;
 			default:
-				if(ptr >= (sizeof(s) - 1))
-					break;
 				putsnonl(c);
 				s[ptr] = c[0];
 				ptr++;
 				break;
 		}
 	}
-	return NULL;
 }
 
-static void console_service(void)
+static char *get_token(char **str)
 {
-	char *str;
+	char *c, *d;
 
-	str = readstr();
-	if(str == NULL) return;
+	c = (char *)strchr(*str, ' ');
+	if(c == NULL) {
+		d = *str;
+		*str = *str+strlen(*str);
+		return d;
+	}
+	*c = 0;
+	d = *str;
+	*str = c+1;
+	return d;
+}
 
-	if(strcmp(str, "reboot") == 0) asm("call r0");
-	else if (strcmp(str, "test") == 0) puts("Hello World\n");
+static void do_command(char *c)
+{
+	char *token;
+
+	token = get_token(&c);
+
+	if(strcmp(token, "inputs") == 0) inputs();
+	else if(strcmp(token, "ttlout") == 0) ttlout(get_token(&c));
+	else if(strcmp(token, "ttlin") == 0) ttlin();
+
+	else if(strcmp(token, "ddssel") == 0) ddssel(get_token(&c));
+	else if(strcmp(token, "ddsw") == 0) ddsw(get_token(&c), get_token(&c));
+	else if(strcmp(token, "ddsr") == 0) ddsr(get_token(&c));
+	else if(strcmp(token, "ddsfud") == 0) ddsfud();
+	else puts("Unknown command");
 }
 
 int main(void)
 {
+	char buffer[64];
+
 	irq_setmask(0);
 	irq_setie(1);
 	uart_init();
@@ -64,7 +188,9 @@ int main(void)
 	puts("DDS/TTL test software built "__DATE__" "__TIME__"\n");
 		
 	while(1) {
-		console_service();
+		putsnonl("\e[1mtester>\e[0m ");
+		readstr(buffer, 64);
+		do_command(buffer);
 	}
 	
 	return 0;
