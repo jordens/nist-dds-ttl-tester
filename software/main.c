@@ -44,6 +44,10 @@ static void ttlin(void)
 	printf("0x%04x\n", test_ttl_i_read());
 }
 
+#define DDS_REG(x)		MMPTR(0xb0000000 + 4*(x))
+#define DDS_FUD			MMPTR(0xb0000100)
+#define DDS_GPIO		MMPTR(0xb0000104)
+
 static void ddssel(char *n)
 {
 	char *c;
@@ -60,7 +64,7 @@ static void ddssel(char *n)
 		return;
 	}
 
-	MMPTR(0xb0000104) = 1 << n2;
+	DDS_GPIO = 1 << n2;
 }
 
 static void ddsw(char *addr, char *value)
@@ -84,7 +88,7 @@ static void ddsw(char *addr, char *value)
 		return;
 	}
 
-	MMPTR(0xb0000000 + 4*addr2) = value2;
+	DDS_REG(addr2) = value2;
 }
 
 static void ddsr(char *addr)
@@ -103,12 +107,41 @@ static void ddsr(char *addr)
 		return;
 	}
 
-	printf("0x%02x\n", MMPTR(0xb0000000 + 4*addr2));
+	printf("0x%02x\n", DDS_REG(addr2));
 }
 
 static void ddsfud(void)
 {
-	MMPTR(0xb0000100) = 0;
+	DDS_FUD = 0;
+}
+
+static void ddsftw(char *n, char *ftw)
+{
+	char *c;
+	unsigned int n2, ftw2;
+
+	if((*n == 0) || (*ftw == 0)) {
+		printf("ddsftw <n> <ftw>\n");
+		return;
+	}
+
+	n2 = strtoul(n, &c, 0);
+	if(*c != 0) {
+		printf("incorrect number\n");
+		return;
+	}
+	ftw2 = strtoul(ftw, &c, 0);
+	if(*c != 0) {
+		printf("incorrect value\n");
+		return;
+	}
+
+	DDS_GPIO = 1 << n2;
+	DDS_REG(0x0a) = ftw2 & 0xff;
+	DDS_REG(0x0b) = (ftw2 >> 8) & 0xff;
+	DDS_REG(0x0c) = (ftw2 >> 16) & 0xff;
+	DDS_REG(0x0d) = (ftw2 >> 24) & 0xff;
+	DDS_FUD = 0;
 }
 
 static void readstr(char *s, int size)
@@ -174,6 +207,7 @@ static void do_command(char *c)
 	else if(strcmp(token, "ddsw") == 0) ddsw(get_token(&c), get_token(&c));
 	else if(strcmp(token, "ddsr") == 0) ddsr(get_token(&c));
 	else if(strcmp(token, "ddsfud") == 0) ddsfud();
+	else if(strcmp(token, "ddsftw") == 0) ddsftw(get_token(&c), get_token(&c));
 	else puts("Unknown command");
 }
 
