@@ -37,7 +37,7 @@ main.o: main.c
 	$(assemble)
 
 flash: tester.fbi
-	xc3sprog -c papilio -I$(FLASH_PROXY) tester.fbi:w:0x70000:BIN
+	$(MSCDIR)/flash_extra.py papilio_pro tester.fbi 0x70000
 
 libs:
 	$(MAKE) -C $(MSCDIR)/software/libcompiler-rt
