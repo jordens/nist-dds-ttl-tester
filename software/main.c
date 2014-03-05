@@ -7,6 +7,26 @@
 #include <generated/csr.h>
 #include <console.h>
 
+static void leds(char *value)
+{
+	char *c;
+	unsigned int value2;
+
+	if(*value == 0) {
+		printf("leds <value>\n");
+		return;
+	}
+
+	value2 = strtoul(value, &c, 0);
+	if(*c != 0) {
+		printf("incorrect value\n");
+		return;
+	}
+
+	leds_out_write(value2);
+}
+
+
 static void inputs(void)
 {
 	int inp;
@@ -200,6 +220,7 @@ static void help(void)
 	puts("ddsfud         - pulse FUD");
 	puts("ddsftw <n> <d> - write FTW");
 	puts("ddstest        - perform test sequence on dds");
+	puts("leds <n>       - set leds");
 }
 
 static void readstr(char *s, int size)
@@ -259,6 +280,7 @@ static void do_command(char *c)
 
 	if(strcmp(token, "help") == 0) help();
 	else if(strcmp(token, "revision") == 0) printf("%08x\n", MSC_GIT_ID);
+	else if(strcmp(token, "leds") == 0) leds(get_token(&c));
 
 	else if(strcmp(token, "inputs") == 0) inputs();
 	else if(strcmp(token, "ttlout") == 0) ttlout(get_token(&c));
