@@ -144,6 +144,64 @@ static void ddsftw(char *n, char *ftw)
 	DDS_FUD = 0;
 }
 
+static void ddsreset(void)
+{
+	DDS_GPIO |= 1 << 7;
+	DDS_FUD = 0;
+	DDS_GPIO &= ~(1 << 7);
+	DDS_FUD = 0;
+}
+
+static void ddstest(void)
+{
+	int i, j;
+	unsigned int v[12] = {
+		0xaaaaaaaa, 0x55555555, 0xa5a5a5a5, 0x5a5a5a5a,
+		0x00000000, 0xffffffff, 0x12345678, 0x87654321,
+		0x0000ffff, 0xffff0000, 0x00ff00ff, 0xff00ff00,
+		};
+	unsigned int f, g;
+
+	for(i=0; i<8; i++) {
+		DDS_GPIO = i;
+		ddsreset();
+
+		for (j=0; j<8; j++) {
+			f = v[j];
+			DDS_REG(0x0a) = f & 0xff;
+			DDS_REG(0x0b) = (f >> 8) & 0xff;
+			DDS_REG(0x0c) = (f >> 16) & 0xff;
+			DDS_REG(0x0d) = (f >> 24) & 0xff;
+			DDS_FUD = 0;
+			g = DDS_REG(0x0a);
+			g |= DDS_REG(0x0b) << 8;
+			g |= DDS_REG(0x0c) << 16;
+			g |= DDS_REG(0x0d) << 24;
+			if(g != f) {
+				printf("readback fail on %02x, %08x != %08x\n", i, g, f);
+			}
+		}
+	}
+}
+
+static void help(void)
+{
+	puts("NIST DDS/TTL Tester");
+	puts("Available commands:");
+	puts("help           - this message");
+	puts("revision       - display revision");
+	puts("inputs         - read inputs");
+	puts("ttlout <n>     - output ttl");
+	puts("ttlin          - read ttll");
+	puts("ddssel <n>     - select a dds");
+	puts("ddsreset       - reset all dds");
+	puts("ddsw <a> <d>   - write to dds register");
+	puts("ddsr <a>       - read dds register");
+	puts("ddsfud         - pulse FUD");
+	puts("ddsftw <n> <d> - write FTW");
+	puts("ddstest        - perform test sequence on dds");
+}
+
 static void readstr(char *s, int size)
 {
 	char c[2];
@@ -199,16 +257,23 @@ static void do_command(char *c)
 
 	token = get_token(&c);
 
-	if(strcmp(token, "inputs") == 0) inputs();
+	if(strcmp(token, "help") == 0) help();
+	else if(strcmp(token, "revision") == 0) printf("%08x\n", MSC_GIT_ID);
+
+	else if(strcmp(token, "inputs") == 0) inputs();
 	else if(strcmp(token, "ttlout") == 0) ttlout(get_token(&c));
 	else if(strcmp(token, "ttlin") == 0) ttlin();
 
 	else if(strcmp(token, "ddssel") == 0) ddssel(get_token(&c));
 	else if(strcmp(token, "ddsw") == 0) ddsw(get_token(&c), get_token(&c));
 	else if(strcmp(token, "ddsr") == 0) ddsr(get_token(&c));
+	else if(strcmp(token, "ddsreset") == 0) ddsreset();
 	else if(strcmp(token, "ddsfud") == 0) ddsfud();
 	else if(strcmp(token, "ddsftw") == 0) ddsftw(get_token(&c), get_token(&c));
-	else puts("Unknown command");
+	else if(strcmp(token, "ddstest") == 0) ddstest();
+
+	else if(strcmp(token, "") != 0)
+		printf("Command not found\n");
 }
 
 int main(void)
