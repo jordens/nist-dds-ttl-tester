@@ -64,7 +64,7 @@ static void ddssel(char *n)
 		return;
 	}
 
-	DDS_GPIO = 1 << n2;
+	DDS_GPIO = n2;
 }
 
 static void ddsw(char *addr, char *value)
@@ -136,7 +136,7 @@ static void ddsftw(char *n, char *ftw)
 		return;
 	}
 
-	DDS_GPIO = 1 << n2;
+	DDS_GPIO = n2;
 	DDS_REG(0x0a) = ftw2 & 0xff;
 	DDS_REG(0x0b) = (ftw2 >> 8) & 0xff;
 	DDS_REG(0x0c) = (ftw2 >> 16) & 0xff;
