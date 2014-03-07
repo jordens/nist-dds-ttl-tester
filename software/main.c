@@ -65,8 +65,8 @@ static void ttlin(void)
 }
 
 #define DDS_REG(x)		MMPTR(0xb0000000 + 4*(x))
-#define DDS_FUD			MMPTR(0xb0000100)
-#define DDS_GPIO		MMPTR(0xb0000104)
+#define DDS_FUD			DDS_REG(64)
+#define DDS_GPIO		DDS_REG(65)
 
 static void ddssel(char *n)
 {
@@ -169,7 +169,6 @@ static void ddsreset(void)
 	DDS_GPIO |= 1 << 7;
 	DDS_FUD = 0;
 	DDS_GPIO &= ~(1 << 7);
-	DDS_FUD = 0;
 }
 
 static void ddstest(void)
@@ -198,7 +197,7 @@ static void ddstest(void)
 			g |= DDS_REG(0x0c) << 16;
 			g |= DDS_REG(0x0d) << 24;
 			if(g != f) {
-				printf("readback fail on %02x, %08x != %08x\n", i, g, f);
+				printf("readback fail on DDS %02x, %08x != %08x\n", i, g, f);
 			}
 		}
 	}
