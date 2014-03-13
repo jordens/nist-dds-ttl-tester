@@ -2,7 +2,7 @@ NIST DDS/TTL Trester
 ====================
 
 Test, Debugging, Benchmarking and Verification setup for NIST Ion
-Storage DDS and TTL boxes
+Storage DDS and TTL boxes.
 
 Sources
 -------
@@ -12,12 +12,15 @@ Sources
 * https://github.com/jordens/nist-dds-ttl-tester
 * Xilinx ISE, xc3sprog urjtag, python3
 
+* git@ions.nist.gov:qcpapilio-adapter.git
+  (https://ions.nist.gov/gitweb/?p=qcpapilio-adapter.git;a=summary)
+
 Notes
 -----
 
 * Propagation Delay from FPGA outputs to TTLs is ~11ns (two transcievers
-  and 50cm cable
-* Direction switches take ~30ns (transciever times).
+  and 50cm cable) typical.
+* Direction switches take ~30ns (transciever times) typical.
 * FUD and RST are inverted on the backplane.
 
 Introduction
@@ -47,17 +50,6 @@ flterm --port /dev/ttyUSB1 --kernel tester.bin
 with:
 make flash FLASH_PROXY=/path_to/bscan_spi_lx9_papilio.bit
 
-The test software has the following commands:
-inputs - display the status of the PMTx/XTRIG inputs
-ttlout <value> - set the TTLs as outputs and write the 16-bit value
-ttlin - set the TTLs as inputs and display the current value
-ddssel <n> - selects one of the DDS chips
-ddsw <addr> <value> - write to a DDS chip register
-ddsr <addr> - read from a DDS chip register
-ddsfud - pulse the DDS frequency update signal
-
-Let me know if this is good for you or if you need some adjustements.
-
 If you modify the gateware, note that there is a problem with the
 load-bitstream action of make.py - the result of which is the BIOS fails
 to start. This does not happen when UrJTAG is used instead of xc3sprog,
@@ -67,3 +59,39 @@ detect
 pld load build/build/ddsttltestersoc-papilio_pro.bit
 You can also write the bitstream to the flash every time.
 
+Result
+------
+
+Running one cycle of tests on all DDS, DDS 7 being broken::
+
+    tester> ddstest 1
+    readback fail on DDS 7, 0x00000000 != 0xaaaaaaaa
+    readback fail on DDS 7, 0x00000000 != 0x55555555
+    readback fail on DDS 7, 0x00000000 != 0xa5a5a5a5
+    readback fail on DDS 7, 0x00000000 != 0x5a5a5a5a
+    readback fail on DDS 7, 0x00000000 != 0xffffffff
+    readback fail on DDS 7, 0x00000000 != 0x12345678
+    readback fail on DDS 7, 0x00000000 != 0x87654321
+    readback fail on DDS 7, 0x00000000 != 0x0000ffff
+    readback fail on DDS 7, 0x00000000 != 0xffff0000
+    readback fail on DDS 7, 0x00000000 != 0x00ff00ff
+    readback fail on DDS 7, 0x00000000 != 0xff00ff00
+    tester> 
+
+    tester> help
+    NIST DDS/TTL Tester
+    Available commands:
+    help           - this message
+    revision       - display revision
+    inputs         - read inputs
+    ttlout <n>     - output ttl
+    ttlin          - read ttll
+    ddssel <n>     - select a dds
+    ddsinit        - reset, cfr, fud dds
+    ddsreset       - reset dds
+    ddsw <a> <d>   - write to dds register
+    ddsr <a>       - read dds register
+    ddsfud         - pulse FUD
+    ddsftw <n> <d> - write FTW
+    ddstest <n>    - perform test sequence on dds
+    leds <n>       - set leds
