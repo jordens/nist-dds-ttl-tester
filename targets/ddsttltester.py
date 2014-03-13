@@ -15,20 +15,17 @@ _tester_io = [
 		Subsignal("tx_l", Pins("A:9")),
 		Subsignal("tx_h", Pins("B:6")),
 		IOStandard("LVTTL")),
+	("inputs", 0, Pins("C:12 C:13 C:14 C:15"), IOStandard("LVTTL")),
 	("dds", 0,
 		Subsignal("a", Pins("A:5 B:10 A:6 B:9 A:7 B:8")),
 		Subsignal("d", Pins("A:12 B:3 A:13 B:2 A:14 B:1 A:15 B:0")),
 		Subsignal("sel", Pins("A:2 B:14 A:1 B:15 A:0")),
 		Subsignal("p", Pins("A:8 B:12")),
-		Subsignal("fud", Pins("B:11")),
+		Subsignal("fud_n", Pins("B:11")),
 		Subsignal("wr_n", Pins("A:4")),
 		Subsignal("rd_n", Pins("B:13")),
-		Subsignal("reset", Pins("A:3")),
+		Subsignal("rst_n", Pins("A:3")),
 		IOStandard("LVTTL")),
-	("pmt", 0, Pins("C:13"), IOStandard("LVTTL")),
-	("pmt", 1, Pins("C:14"), IOStandard("LVTTL")),
-	("pmt", 2, Pins("C:15"), IOStandard("LVTTL")),
-	("xtrig", 0, Pins("C:12"), IOStandard("LVTTL")),
 ]
 
 class _CRG(Module):
@@ -72,8 +69,7 @@ class DDSTTLTesterSoC(GenSoC):
 		self.add_cpu_memory_region("sdram", 0x40000000, sys_ram_size)
 
 		self.submodules.leds = gpio.GPIOOut(Cat(platform.request("user_led", i) for i in range(2)))
-		self.submodules.test_inputs = gpio.GPIOIn(Cat([platform.request("pmt", i) for i in range(3)],
-			platform.request("xtrig")))
+		self.submodules.test_inputs = gpio.GPIOIn(platform.request("inputs"))
 		self.submodules.test_ttl = ttlgpio.TTLGPIO(platform.request("ttl"))
 		self.submodules.dds = ad9858.AD9858(platform.request("dds"))
 		self.add_wb_slave(lambda a: a[26:29] == 3, self.dds.bus)

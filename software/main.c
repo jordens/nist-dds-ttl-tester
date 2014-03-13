@@ -32,10 +32,7 @@ static void inputs(void)
 	int inp;
 
 	inp = test_inputs_in_read();
-	printf("PMT0: %d\n", !!(inp & 0x01));
-	printf("PMT1: %d\n", !!(inp & 0x02));
-	printf("PMT2: %d\n", !!(inp & 0x04));
-	printf("XTRIG:%d\n", !!(inp & 0x08));
+	printf("0x%02x\n", inp);
 }
 
 static void ttlout(char *value)
@@ -167,38 +164,63 @@ static void ddsftw(char *n, char *ftw)
 static void ddsreset(void)
 {
 	DDS_GPIO |= 1 << 7;
-	DDS_FUD = 0;
 	DDS_GPIO &= ~(1 << 7);
 }
 
-static void ddstest(void)
+static void ddsinit(void)
 {
-	int i, j;
+	ddsreset();
+	DDS_REG(0x00) = 0x78;
+	DDS_REG(0x01) = 0x00;
+	DDS_REG(0x02) = 0x00;
+	DDS_REG(0x03) = 0x00;
+	ddsfud();
+}
+
+static void ddstest_one(unsigned int i)
+{
 	unsigned int v[12] = {
 		0xaaaaaaaa, 0x55555555, 0xa5a5a5a5, 0x5a5a5a5a,
 		0x00000000, 0xffffffff, 0x12345678, 0x87654321,
 		0x0000ffff, 0xffff0000, 0x00ff00ff, 0xff00ff00,
 		};
-	unsigned int f, g;
+	unsigned int f, g, j;
 
-	for(i=0; i<8; i++) {
-		DDS_GPIO = i;
-		ddsreset();
+	DDS_GPIO = i;
+	ddsinit();
 
-		for (j=0; j<8; j++) {
-			f = v[j];
-			DDS_REG(0x0a) = f & 0xff;
-			DDS_REG(0x0b) = (f >> 8) & 0xff;
-			DDS_REG(0x0c) = (f >> 16) & 0xff;
-			DDS_REG(0x0d) = (f >> 24) & 0xff;
-			DDS_FUD = 0;
-			g = DDS_REG(0x0a);
-			g |= DDS_REG(0x0b) << 8;
-			g |= DDS_REG(0x0c) << 16;
-			g |= DDS_REG(0x0d) << 24;
-			if(g != f) {
-				printf("readback fail on DDS %02x, %08x != %08x\n", i, g, f);
-			}
+	for (j=0; j<12; j++) {
+		f = v[j];
+		DDS_REG(0x0a) = f & 0xff;
+		DDS_REG(0x0b) = (f >> 8) & 0xff;
+		DDS_REG(0x0c) = (f >> 16) & 0xff;
+		DDS_REG(0x0d) = (f >> 24) & 0xff;
+		DDS_FUD = 0;
+		g = DDS_REG(0x0a);
+		g |= DDS_REG(0x0b) << 8;
+		g |= DDS_REG(0x0c) << 16;
+		g |= DDS_REG(0x0d) << 24;
+		if(g != f) {
+			printf("readback fail on DDS %d, 0x%08x != 0x%08x\n", i, g, f);
+		}
+	}
+}
+
+static void ddstest(char *n)
+{
+	int i, j;
+	char *c;
+	unsigned int n2;
+
+	if (*n == 0) {
+		printf("ddstest <cycles>\n");
+		return;
+	}
+	n2 = strtoul(n, &c, 0);
+
+	for(i=0; i<n2; i++) {
+		for(j=0; j<8; j++) {
+		    	ddstest_one(j);
 		}
 	}
 }
@@ -213,12 +235,13 @@ static void help(void)
 	puts("ttlout <n>     - output ttl");
 	puts("ttlin          - read ttll");
 	puts("ddssel <n>     - select a dds");
-	puts("ddsreset       - reset all dds");
+	puts("ddsinit        - reset, cfr, fud dds");
+	puts("ddsreset       - reset dds");
 	puts("ddsw <a> <d>   - write to dds register");
 	puts("ddsr <a>       - read dds register");
 	puts("ddsfud         - pulse FUD");
 	puts("ddsftw <n> <d> - write FTW");
-	puts("ddstest        - perform test sequence on dds");
+	puts("ddstest <n>    - perform test sequence on dds");
 	puts("leds <n>       - set leds");
 }
 
@@ -289,9 +312,10 @@ static void do_command(char *c)
 	else if(strcmp(token, "ddsw") == 0) ddsw(get_token(&c), get_token(&c));
 	else if(strcmp(token, "ddsr") == 0) ddsr(get_token(&c));
 	else if(strcmp(token, "ddsreset") == 0) ddsreset();
+	else if(strcmp(token, "ddsinit") == 0) ddsinit();
 	else if(strcmp(token, "ddsfud") == 0) ddsfud();
 	else if(strcmp(token, "ddsftw") == 0) ddsftw(get_token(&c), get_token(&c));
-	else if(strcmp(token, "ddstest") == 0) ddstest();
+	else if(strcmp(token, "ddstest") == 0) ddstest(get_token(&c));
 
 	else if(strcmp(token, "") != 0)
 		printf("Command not found\n");
