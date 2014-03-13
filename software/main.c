@@ -220,7 +220,7 @@ static void ddstest(char *n)
 
 	for(i=0; i<n2; i++) {
 		for(j=0; j<8; j++) {
-		    	ddstest_one(j);
+			ddstest_one(j);
 		}
 	}
 }
