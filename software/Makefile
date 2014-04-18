@@ -12,7 +12,7 @@ all: tester.bin tester.fbi
 	chmod -x $@
 
 %.fbi: %.bin
-	$(MSCDIR)/tools/mkmscimg $< write $@
+	$(MSCDIR)/mkmscimg.py -f -o $@ $<
 
 tester.elf: $(OBJECTS) libs
 
