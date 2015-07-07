@@ -1,0 +1,34 @@
+PCBNEW-LibModule-V1  Sun 16 Feb 2014 09:03:26 PM MST
+# encoding utf-8
+Units mm
+$INDEX
+spst_fsmsm
+$EndINDEX
+$MODULE spst_fsmsm
+Po 0 0 0 15 53018A01 00000000 ~~
+Li spst_fsmsm
+Sc 0
+AR 
+Op 0 0 0
+T0 0 2.54 1 1 0 0.15 N V 21 N "FSMSM"
+T1 0 -2.54 1 1 0 0.15 N V 21 N "VAL**"
+DS -3.048 -1.778 3.556 -1.778 0.15 21
+DS 3.556 -1.778 3.556 1.778 0.15 21
+DS 3.556 1.778 -3.048 1.778 0.15 21
+DS -3.048 1.778 -3.048 -1.778 0.15 21
+$PAD
+Sh "1" R 2.286 1.651 0 0 0
+Dr 0 0 0
+At SMD N 00888000
+Ne 0 ""
+Po 7.112 0
+$EndPAD
+$PAD
+Sh "1" R 2.286 1.651 0 0 0
+Dr 0 0 0
+At SMD N 00888000
+Ne 0 ""
+Po -3.556 0
+$EndPAD
+$EndMODULE spst_fsmsm
+$EndLIBRARY
